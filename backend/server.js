@@ -9,9 +9,22 @@ const app = express();
 const port = process.env.PORT || 8080;
 const CLIPDROP_API_KEY = process.env.CLIPDROP_API_KEY;
 
-app.use(cors({ 
-  origin: [process.env.FRONTEND_URL, "https://karen-12.netlify.app"],  // ✅ Explicitly allow frontend
-  credentials: true 
+// ✅ Allow multiple origins (Localhost + Netlify)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174", // Allow frontend on different ports
+  process.env.FRONTEND_URL, // Netlify frontend
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed"));
+    }
+  },
+  credentials: true,
 }));
 
 app.use(express.json());
@@ -42,11 +55,11 @@ app.post("/api/generate-image", async (req, res) => {
 
     const buffer = await response.arrayBuffer();
     
-    // ✅ Fix CORS issue by setting headers
-    res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL || "*");
+    // ✅ Fix CORS headers for all responses
+    res.setHeader("Access-Control-Allow-Origin", allowedOrigins.includes(req.headers.origin) ? req.headers.origin : "https://karen-12.netlify.app");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    
+
     res.setHeader("Content-Type", "image/png");
     res.send(Buffer.from(buffer));
   } catch (error) {
@@ -55,12 +68,13 @@ app.post("/api/generate-image", async (req, res) => {
   }
 });
 
-// ✅ Handle Preflight Requests (CORS)
+// ✅ Handle Preflight CORS Requests
 app.options("*", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL || "*");
+  res.setHeader("Access-Control-Allow-Origin", allowedOrigins.includes(req.headers.origin) ? req.headers.origin : "https://karen-12.netlify.app");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.sendStatus(200);
 });
 
 app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
+
