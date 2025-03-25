@@ -76,7 +76,7 @@ function App() {
   transition={{ type: "spring", stiffness: 120 }} // Smooth transition
   className="relative z-50"
 >
-  <div className="w-full bg-black text-white px-10 py-5 relative overflow-hidden">
+  <div className="w-full bg-gradient-to-r from-black via-black/90 to-black text-white px-10 py-5 relative overflow-hidden">
     
     {/* Animated Moving Background */}
     <div className="absolute inset-0 z-0 animate-gradient bg-[radial-gradient(circle_at_center,_#000000,_#111111,_#222222)] opacity-80"></div>
@@ -185,6 +185,12 @@ function App() {
       )}
     </form>
   </div>
+  <footer className="p-6 px-10 text-white fixed bottom-0 w-full bg-gradient-to-r from-black via-black/90 to-black flex justify-center items-center z-50 shadow-lg">
+  <h2 >
+    Powered by PORTGAS
+    <span className="text-lime-500"> U!</span>
+  </h2>
+</footer>
 </div>
 
     </div>
