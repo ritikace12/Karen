@@ -3,9 +3,9 @@ import { useState } from "react";
 import { FiImage, FiRefreshCw } from "react-icons/fi"; 
 import { FaLinkedin } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { EnvelopeIcon, CommandLineIcon } from "@heroicons/react/24/outline";
+import { EnvelopeIcon } from "@heroicons/react/24/outline";
 
-// API endpoint: Adjusts based on environment
+// ✅ Set API URL correctly
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api/generate-image"; 
 
 // ========================== MAIN COMPONENT ==========================
@@ -13,6 +13,7 @@ function App() {
   const [prompt, setPrompt] = useState("");
   const [image, setImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);  // ✅ Added error state
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -20,6 +21,7 @@ function App() {
 
     setIsLoading(true);
     setImage(null);
+    setError(null);
 
     try {
       const response = await fetch(API_URL, {
@@ -28,13 +30,15 @@ function App() {
         body: JSON.stringify({ prompt }),
       });
 
-      if (!response.ok) throw new Error("Failed to generate image");
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+      }
 
       const blob = await response.blob();
       setImage(URL.createObjectURL(blob));
     } catch (error) {
-      console.error("Error:", error);
-      alert("Failed to generate image. Try again!");
+      console.error("❌ Error:", error);
+      setError("Failed to generate image. Please try again!");
     } finally {
       setIsLoading(false);
     }
@@ -43,13 +47,14 @@ function App() {
   const clearImage = () => {
     setImage(null);
     setPrompt("");
+    setError(null);
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
       <motion.nav initial={{ y: -100 }} animate={{ y: 0 }} transition={{ type: "spring", stiffness: 120 }} className="relative z-50">
-        <div className="w-full bg-black text-white px-10 py-5 relative">
+        <div className="w-full bg-black text-white px-10 py-5">
           <div className="flex items-center justify-between px-10 h-16">
             <motion.div className="flex items-center space-x-3" whileHover={{ scale: 1.05 }}>
               <span className="text-2xl font-bold tracking-wider">␥ KAREN</span>
@@ -73,14 +78,35 @@ function App() {
         <div className="relative text-center">
           <h1 className="text-3xl font-bold text-black mb-6">Text-to-Image Generator</h1>
           <form onSubmit={handleGenerate} className="w-full max-w-md flex flex-col items-center space-y-4">
-            <input type="text" value={prompt} onChange={(e) => setPrompt(e.target.value)} className="w-full p-3 rounded-lg border border-black text-black shadow-sm" placeholder="Enter image description..." disabled={isLoading} />
-            <button type="submit" className="p-3 bg-black text-white rounded-lg w-full flex items-center justify-center shadow-md">
+            <input 
+              type="text" 
+              value={prompt} 
+              onChange={(e) => setPrompt(e.target.value)} 
+              className="w-full p-3 rounded-lg border border-black text-black shadow-sm" 
+              placeholder="Enter image description..." 
+              disabled={isLoading} 
+            />
+            <button 
+              type="submit" 
+              className={`p-3 rounded-lg w-full flex items-center justify-center shadow-md ${
+                isLoading ? "bg-gray-500" : "bg-black text-white"
+              }`}
+              disabled={isLoading}
+            >
               {isLoading ? "Generating..." : "Generate Image"} <FiImage className="ml-2" />
             </button>
+
+            {/* ✅ Error Handling */}
+            {error && <p className="text-red-600">{error}</p>}
+
+            {/* ✅ Show Generated Image */}
             {image && (
               <>
                 <img src={image} alt="Generated" className="mt-4 rounded-lg shadow-lg max-w-full h-auto border-2" />
-                <button onClick={clearImage} className="p-3 bg-[#ffd700] text-[#0a0a2a] rounded-lg w-full flex items-center justify-center mt-2">
+                <button 
+                  onClick={clearImage} 
+                  className="p-3 bg-[#ffd700] text-[#0a0a2a] rounded-lg w-full flex items-center justify-center mt-2"
+                >
                   Clear <FiRefreshCw className="ml-2" />
                 </button>
               </>
@@ -93,4 +119,5 @@ function App() {
 }
 
 export default App;
+
 
