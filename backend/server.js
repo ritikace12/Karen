@@ -9,18 +9,20 @@ const app = express();
 const port = process.env.PORT || 8080;
 const CLIPDROP_API_KEY = process.env.CLIPDROP_API_KEY;
 
-// ✅ Allow multiple origins (Localhost + Netlify)
+// ✅ Allowed Frontend URLs (Replace with Your Actual URLs)
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://localhost:5174", // Allow frontend on different ports
-  process.env.FRONTEND_URL, // Netlify frontend
+  "http://localhost:5174",
+  "https://karen-12.netlify.app",
 ];
 
+// ✅ Set up CORS Middleware Properly
 app.use(cors({
-  origin: function (origin, callback) {
+  origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error("❌ CORS BLOCKED:", origin); // Log rejected origins
       callback(new Error("CORS not allowed"));
     }
   },
@@ -28,6 +30,14 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// ✅ Handle Preflight Requests Correctly
+app.options("*", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.sendStatus(200);
+});
 
 app.post("/api/generate-image", async (req, res) => {
   try {
@@ -55,8 +65,8 @@ app.post("/api/generate-image", async (req, res) => {
 
     const buffer = await response.arrayBuffer();
     
-    // ✅ Fix CORS headers for all responses
-    res.setHeader("Access-Control-Allow-Origin", allowedOrigins.includes(req.headers.origin) ? req.headers.origin : "https://karen-12.netlify.app");
+    // ✅ Ensure CORS Headers on Response
+    res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
@@ -68,13 +78,4 @@ app.post("/api/generate-image", async (req, res) => {
   }
 });
 
-// ✅ Handle Preflight CORS Requests
-app.options("*", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", allowedOrigins.includes(req.headers.origin) ? req.headers.origin : "https://karen-12.netlify.app");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.sendStatus(200);
-});
-
 app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
-
